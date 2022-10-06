@@ -1,77 +1,74 @@
+class Data 
+{
+    public static List<string> _usernames = new List<string>();
+}
+
 class Authentication
 {
-    private List<string> usernames = new List<string>();
-    private List<string> passwords = new List<string>();
-
+    private List<string> _usernames = new List<string>();
+    private List<string> _passwords = new List<string>();
+    private List<Employee> _users = new List<Employee>();
     public bool Authenticated { get; private set;} = false;
 
+    private string _input = "";
+
+    public Authentication() {
+        AccessMenu();
+    }
+
     public void AccessMenu() {
-        Console.WriteLine("Welcome to the company's expense reimbursement system");
-        bool acceptInput;
-        char choice;
+        Console.WriteLine("Welcome to the company's expense reimbursement system!");
         do {
-            Console.WriteLine("Do you have a login? (Y/N)");
-            string input = Console.ReadLine();
-            acceptInput = char.TryParse(input, out choice);
+            _input = Inputs.realInput("Do you have a login? (y/N)");
+            bool letter = char.TryParse(_input, out char choice);
 
-            if (acceptInput) break;
-            else {
-                Console.WriteLine("Unrecognized Input");
+            if (letter) {
+                switch(char.ToLower(choice)) {
+                    case 'n':
+                    Register();
+                    return;
+                    case 'y':
+                    LogIn();
+                    return;
+                    case 'e':
+                    return;
+                    default:
+                    break;
+                }
             }
-        } while (!acceptInput);
-
-        switch(char.ToLower(choice)) {
-            case 'n':
-            Register();
-            break;
-            case 'y':
-            LogIn();
-            break;
-            default:
-            Console.WriteLine("ERROR");
-            break;
-        }
-
-        return;
+                
+            Console.WriteLine("Unrecognized Input (\"E\" to exit)");
+        } while (true);
     }
 
     private void LogIn() {
-        Console.WriteLine("Input Username:");
-        string username = Console.ReadLine();
+        _input = Inputs.realInput("Username:");
         
-        while (!usernames.Contains(username) || String.IsNullOrEmpty(username)) {
+        while (!_usernames.Contains(_input)) {
             Console.WriteLine("Username Not Recognized");
 
-            Console.WriteLine("Input Username: (\"NEW\" to register)");
-            username = Console.ReadLine();
+            _input = Inputs.realInput("Username: (\"new\" to register)");
 
-            if (username.ToLower() == "new") {
+            if (_input.ToLower() == "new") {
                 Register();
                 return;
             }
         }
 
-        int userIndex = usernames.FindIndex(u => u.StartsWith(username));
+        int userIndex = _usernames.FindIndex(u => u.StartsWith(_input));
 
-        Console.WriteLine("Input Password: ");
-        string password = Console.ReadLine();
+        _input = Inputs.realInput("Password: ");
         int attempts = 0;
 
-        while (passwords[userIndex] != password || String.IsNullOrEmpty(password)) {
-            if (attempts > 5) {
+        while (_passwords[userIndex] != _input) {
+            if (attempts > 3 || _input.ToLower() == "e") {
                 Authenticated = false;
-                Console.WriteLine("Excess Attempts - Login Failed");
+                Console.WriteLine("Exiting");
                 return;
             }
 
-            Console.WriteLine($"Password Incorrect - {5 - attempts} attempts remain");
-            Console.WriteLine("Input Password: (\"E\" to exit)");
-            password = Console.ReadLine();
-
-            if (password.ToLower() == "e") {
-                Authenticated = false;
-                return;
-            }
+            Console.WriteLine($"Password Incorrect - {3 - attempts} attempts remain");
+            _input = Inputs.realInput("Password: (\"E\" to exit)");
 
             attempts++;
         }
@@ -82,72 +79,105 @@ class Authentication
     }
 
     private void Register() {
-        Console.WriteLine("New User Registration");
-        Console.WriteLine("New Username: ");
-        string username = Console.ReadLine();
+        do {
+            _input = Inputs.realInput("Would you like to register? (y/N)");
+            bool letter = char.TryParse(_input, out char choice);
 
-        while (!usernames.Contains(username) || String.IsNullOrEmpty(username)) {
-            Console.WriteLine("Invalid Input");
-
-            if (usernames.Contains(username)) {
-                Console.WriteLine("Username already exists!");
+            if (letter) {
+                choice = char.ToLower(choice);
+                if (choice == 'y') {
+                    break;
+                }
+                else if (choice == 'n' || choice == 'e') {
+                    return;
+                }
             }
+                
+            Console.WriteLine("Unrecognized Input (\"E\" to exit)");
+        } while (true);
 
-            Console.WriteLine("New Username: (\"E\" to exit)");
-            username = Console.ReadLine();
+        Console.WriteLine("New User Registration");
+        _input = Inputs.realInput("New Username: ");
 
-            if (username.ToLower() == "e") {
-                Authenticated = false;
+        while (_usernames.Contains(_input)) {
+            Console.WriteLine("Username already exists!");
+
+            _input = Inputs.realInput("New Username: (\"E\" to exit)");
+
+            if (_input.ToLower() == "e") {
                 return;
             }
         }
 
-        Console.WriteLine("New Password: (must be at least 6 characters long)");
-        string password = Console.ReadLine();
+        string username = _input;
+        _input = Inputs.realInput("New Password: (must be at least 6 characters long)");
 
-        while (password.Length < 6 || String.IsNullOrEmpty(password)) {
-            Console.WriteLine("Invalid Input");
+        while (_input.Length < 6) {
+            Console.WriteLine("Invalid Input - Too Short");
 
-            Console.WriteLine("New Password: (must be at least 6 characters long)");
-            password = Console.ReadLine();
+            _input = Inputs.realInput("New Password: (must be at least 6 characters long)");
         }
 
-        usernames.Add(username);
-        passwords.Add(password);
+        _usernames.Add(username);
+        _passwords.Add(_input);
+        Data._usernames.Add(username);
 
         Console.WriteLine("Login Registered!");
         Authenticated = true;
+
+        _users.Add(new Employee());
         return;
     }
 }
 
 class Ticket
 {
-    private int amount;
-    private string description;
-    private bool reviewed;
+    private decimal _amount;
+    private string _description;
+    public bool Reviewed { get; private set;} = false;
 
     public Ticket()
     {
-        inputAmount();
-        inputDescription();
-        reviewed = false;
+        Amount();
+        _description = Inputs.realInput("Expense/ticket description: ");
     }
 
     public Ticket(int amount, string description)
     {
-        this.amount = amount;
-        this.description = description;
-        reviewed = false;
+        _amount = amount;
+        _description = description;
     }
 
-    private void inputAmount() 
+    private void Amount() 
     {
+        bool isNumber = true;
+
+        do {
+            if (!isNumber) 
+                Console.WriteLine("Invalid Input");
+
+            string input = Inputs.realInput("How much was the expense? (Numbers Only))");
+            isNumber = decimal.TryParse(input, out _amount);
+        } while (!isNumber);
+
         return;
     }
-    
-    private void inputDescription()
-    {
-        return;
+
+    public string printInfo() {
+        return ($"Amount: {_amount}\nDescription: {_description}\n");
+    }
+}
+
+public static class Inputs
+{
+    public static string realInput(string msg) {
+        do {
+            Console.WriteLine(msg);
+            string input = Console.ReadLine();
+
+            if (!String.IsNullOrWhiteSpace(input)) {
+                return input;
+            }
+        } while (true);
     }
 }
