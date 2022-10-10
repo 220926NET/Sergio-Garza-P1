@@ -1,13 +1,13 @@
-//using Models;
+using Models;
 using Services;
 
 public class AuthenticationMenu
 {
     public bool LoggedIn { get; private set; } = false;
-    public string Username { get; private set; } = "";
-    private Authentication access; 
+
+    private Authentication accessability; 
     public AuthenticationMenu() {
-        access = new Authentication();
+        accessability = new Authentication();
     }
 
     public void AccessMenu() {
@@ -25,7 +25,7 @@ public class AuthenticationMenu
         Console.WriteLine("New User Registration");
 
         string username = Inputs.RealInput("New Username: ");
-        while (access.UsernameExists(username)) {
+        while (accessability.UsernameExists(username)) {
             Console.WriteLine("Username already exists!");
 
             username = Inputs.RealInput("New Username: ");
@@ -38,7 +38,7 @@ public class AuthenticationMenu
             password = Inputs.RealInput("New Password: (must be at least 6 characters long)");
         }
 
-        if (access.Register(username, password)) {
+        if (accessability.Register(username, password)) {
             Console.WriteLine("New Account Registered!");
             Console.WriteLine("Please login using registered credentials");
 
@@ -62,9 +62,8 @@ public class AuthenticationMenu
 
             string password = Inputs.RealInput("Password: ");
 
-            if (access.LogIn(username, password)) {
+            if (accessability.LogIn(username, password)) {
                 LoggedIn = true;
-                Username = username;
                 return;
             }
 
@@ -72,20 +71,25 @@ public class AuthenticationMenu
         }
         return;
     }
+
+    public void End() {
+        if (LoggedIn) accessability.Exiting();
+        return;
+    }
 }
 
-public class MainMenu
+public class UserMenu
 {
     public static void Menu() {
         Console.WriteLine("What would you like to do today?");
         Console.WriteLine("[0] Log Out");
         Console.WriteLine("[1] Create Ticket");             //MVP!!!
-        Console.WriteLine("[2] View Previous Tickets");     //MVP!!!
+        Console.WriteLine("[2] View Your Previous Tickets");     //MVP!!!
         Console.WriteLine("[3] Review/Update Account Info");
         return;
     }
 
-    public static int Selection() {
+    protected static int Selection() {
         do {
             string input = Inputs.RealInput("");
             bool number = int.TryParse(input, out int choice);
@@ -93,23 +97,23 @@ public class MainMenu
             if (number) {
                 switch(choice) {
                     case 0:
-                    //Environment.Exit(0);
-                    return 0;
+                        return 0;
                     case 1:
-
-                    return 1;
+                        CreateTicket();
+                        return 1;
                     case 2:
-
-                    return 2;
+                        ViewTickets();
+                        return 2;
                     case 3:
-
-                    return 3;
+                        ViewAccount();
+                        UpdateAccount();
+                        return 3;
                     case 4:
-                    return 4;
+                        return 4;
                     case 5:
-                    return 5;
+                        return 5;
                     default:
-                    break;
+                        break;
                 }
             }
                 
@@ -127,9 +131,54 @@ public class MainMenu
 
         return;
     }
+
+    protected static void ViewTickets() {
+        List<Ticket>? tickets = ERSService.GetTickets();
+
+        if (tickets == null) {
+            Console.WriteLine("You have not submitted any tickets");
+            return;
+        }
+
+        foreach (Ticket t in tickets) {
+            Console.WriteLine("\nTicket Number: " + (tickets.IndexOf(t) + 1));
+            Console.Write(t.Info());
+        }
+        return;
+    }
+
+    protected static void CreateTicket() {
+        string input = Inputs.RealInput("How much was the expense? (Numbers Only))");
+        bool isNumber = decimal.TryParse(input, out decimal amount);
+
+        while(!isNumber) {
+            Console.WriteLine("Invalid Input");
+
+            input = Inputs.RealInput("How much was the expense? (Numbers Only))");
+            isNumber = decimal.TryParse(input, out amount);
+        }
+
+        string description = Inputs.RealInput("Description: ");
+
+        ERSService.AddTicket(new Ticket(amount, description));
+        return;
+    }
+
+    protected static void ViewAccount() {
+        Console.WriteLine(":Account Info:");
+        Console.WriteLine(ERSService.AccountInfo());
+        return;
+    }
+
+    protected static void UpdateAccount() {
+        if (Inputs.YesNoExit("Whould you like to update your account information?")) {
+
+        }
+        return;
+    }
 }
 
-public class ManagerMenu : MainMenu
+public class ManagerMenu : UserMenu
 {   
     public ManagerMenu() {
         Repeat();
@@ -140,7 +189,7 @@ public class ManagerMenu : MainMenu
         Console.WriteLine("[5] Change an Employee's Role");
         return;
     }
-    public new void Repeat() {
+    private new void Repeat() {
         do {
             Menu();
             ExtraOptions();
@@ -149,22 +198,33 @@ public class ManagerMenu : MainMenu
 
             if (choice == 0)   
                 break;
-            else if (choice > 3) {
-                if (choice == 4) {
+            else if (choice == 4) 
+                ProcessTickets();
+            else if (choice == 5) {
 
-                }
-                else if (choice == 5) {
-
-                }
             }
-
         } while (true);
 
         return;
     }
 
-    private void ReviewTicket() {
-        return;
+    private void ProcessTickets() {
+        do {
+            Ticket? t = ERSService.TicketFromQueue();
+            if (t == null) {
+                Console.WriteLine("There are no unreviewed tickets");
+                return;
+            }
+
+            Console.WriteLine("Reviewing oldest ticket submission");
+            Console.WriteLine("\nTicket Info: ");
+
+            Console.Write(t.Info());
+
+            ERSService.ReviewTicket(t, Inputs.YesNoExit("Approve ticket?"));
+
+            if (!Inputs.YesNoExit("Would you like to continue with another ticket?"))   return;
+        } while (true);
     }
 }
 
@@ -203,4 +263,6 @@ public static class Inputs
             Console.WriteLine("Unrecognized Input (\"E\" to exit)");
         } while (true);
     }
+
+    // public static int Number(string msg) {}
 }
