@@ -2,64 +2,62 @@
 
 public class Ticket
 {
-    private decimal _amount;
-    private string _description;
-    public bool Reviewed { get; private set; } = false;
+    public decimal Amount { 
+        get {   return Amount;   } 
+        private set {
+            if (Amount < 0) throw new ArgumentException("Invalid expense amount");
+            else    Amount = value;
+        }
+    }
+    public string Description { get; private set; }
 
-    public bool Approved { get; private set; } = false;
-    private string _reviewer;
+    public string Status { get; private set; } = "Pending";
+    public string? Reviewer { get; private set; } = null;
 
     public Ticket(decimal amount, string description)
     {
-        _amount = amount;
-        _description = description;
-        _reviewer = "";
+        Amount = amount;
+        Description = description;
+    }
+    public Ticket(decimal amount, string description, string status) {
+        Amount = amount;
+        Description = description;
+        Status = status;
+    }
+
+    public void Review(Manager? m, bool approval) {
+        if (m == null)  return;
+
+        Reviewer = m.username;
+        if (approval)  Status = "Approved";
+
+        return;
     }
 
     public string Info() {
-        return ($"Amount: {_amount}\nDescription: {_description}\n");
-    }
-
-    public void Review(Manager? m, bool approving) {
-        if (m == null)  return;
-
-        _reviewer = m.Name();
-        Reviewed = true;
-
-        if (approving)  Approved = true;
-        return;
+        return ($"Amount: {Amount}\nDescription: {Description}\n");
     }
 }
 
 public class Employee
 {
-    public string firstName;
-    public string middleName = "";
-    public string lastName;
-    public List<Ticket> tickets = new List<Ticket>();
+    public string firstName, lastName, username;
+    public string? middleName = null;
+    //public List<Ticket> tickets = new List<Ticket>();
 
-    public Employee(){
-        firstName = "";
-        lastName = "";
-    }
-    public Employee(string first, string last) {
+    public Employee() {}
+    public Employee(string first, string last, string user) {
         firstName = first;
         lastName = last;
+        username = user;
     }
-    public Employee(string first, string middle, string last) {
+    public Employee(string first, string middle, string last, string user) {
         firstName = first;
         middleName = middle;
         lastName = last;
+        username = user;
     }
 
-    // public bool HasTickets() {
-    //     if (tickets.Count > 0) return true;
-    //     else    return false;
-    // }
-
-    public string Name() {
-        return firstName + " " + lastName;
-    }
     public string Info() {
         return ($"First Name: {firstName}, Middle Name: {(middleName != "" ? middleName : "N/A")}, Last Name: {lastName}");
     }
@@ -67,8 +65,9 @@ public class Employee
 
 public class Manager : Employee
 {
-    public Manager(string first, string last) {
+    public Manager(string first, string last, string user) {
         firstName = first;
         lastName = last;
+        username = user;
     }
 }

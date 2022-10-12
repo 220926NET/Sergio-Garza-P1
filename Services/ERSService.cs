@@ -5,87 +5,92 @@ namespace Services;
 
 public class Authentication
 {
+    private IERSStorage _repo;
     private bool _authenticated;
+
     public Authentication() {
         _authenticated = false;
-        //StaticStorage.GetFilesInfo();
+        _repo = new DBRepo();
     }
 
     public bool UsernameExists(string username) {
-        if (StaticStorage.CheckUsername(username)) {
-            return true;
-        }
+        if (_repo.CheckUsername(username)) return true;
         else    return false;
     }
 
     public bool Register(string username, string password) {
         if (!UsernameExists(username)) {
-            StaticStorage.AddLogIn(username, password);
-            StaticStorage.AddEmployee(username);
+            _repo.AddLogIn(username, password);
+            _repo.AddEmployee(username);
             return true;
         }
         _authenticated = false;
         return false;
     }
 
-    public bool LogIn(string username, string password) {
+    public ERSService? LogIn(string username, string password) {
         if (UsernameExists(username)) {
-            if (StaticStorage.VerifyCredentials(username, password)) {
-
-                if (StaticStorage.IsManager(username))  ERSService.ManagerLogIn(username);
-                else    ERSService.EmployeeLogIn(username);
+            if (_repo.VerifyCredentials(username, password)) {
+                ERSService service = new ERSService(_repo, username);
 
                 _authenticated = true;
-                return true;
+                return service;
             }
         }
         _authenticated = false;
-        return false;
+        return null;
     }
 
     public void Exiting() {
-        StaticStorage.UpdateFiles();
+        _authenticated = false;
         return;
     }
 }
 
 public class ERSService
 {
-    private static Employee? eUser = null;
-    private static Manager? mUser = null;
+    private Employee? eUser = null;
+    private Manager? mUser = null;
+    private IERSStorage _repo;
 
-    public static void EmployeeLogIn(string username) {
-        eUser = StaticStorage.GetEmployee(username);
+    public ERSService(IERSStorage repo, string username) {
+        _repo = repo;
+
+        if (_repo.IsManager(username))  ManagerLogIn(username);
+        else    EmployeeLogIn(username);
+    }
+
+    private void EmployeeLogIn(string username) {
+        eUser = _repo.GetEmployee(username);
         return;
     }
-    public static void ManagerLogIn(string username) {
-        mUser = StaticStorage.GetManager(username);
+    private void ManagerLogIn(string username) {
+        mUser = _repo.GetManager(username);
         return;
     }
 
-    public static bool ManagerCheck() {
+    public bool ManagerCheck() {
         if (mUser != null)  return true;
         else    return false;
     }
-    public static string AccountInfo() {
+    public string AccountInfo() {
         return (eUser ?? mUser).Info();
     }
 
-    public static List<Ticket>? GetTickets() {
-        if ((eUser ?? mUser).tickets.Count > 0)  return (eUser ?? mUser).tickets;
+    public List<Ticket>? GetTickets() {
+        if (_repo.TicketsCount((eUser ?? mUser).username) > 0)  return _repo.GetTickets((eUser ?? mUser).username);
         else    return null;
     }
-    public static void AddTicket(Ticket t) {
-        (eUser ?? mUser).tickets.Add(t);
-        StaticStorage.NewTicket(t);
+    public void AddTicket(Ticket t) {
+        _repo.NewTicket(t, (eUser ?? mUser).username);
         return;
     }
 
-    public static Ticket? TicketFromQueue() {
-        if (StaticStorage.QueueLength() > 0)    return StaticStorage.GetFromQueue();
+    public Ticket? TicketFromQueue() {
+        if (_repo.QueueLength() > 0)    return _repo.GetFromQueue();
         else    return null;
     }
-    public static void ReviewTicket(Ticket t, bool choice) {
+    public void ReviewTicket(Ticket t, bool choice) {
         t.Review(mUser, choice);
         return;
     }

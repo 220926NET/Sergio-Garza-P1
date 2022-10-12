@@ -3,7 +3,7 @@ using Services;
 
 public class AuthenticationMenu
 {
-    public bool LoggedIn { get; private set; } = false;
+    public ERSService? Service { get; private set; } = null;
 
     private Authentication accessability; 
     public AuthenticationMenu() {
@@ -40,7 +40,7 @@ public class AuthenticationMenu
 
         if (accessability.Register(username, password)) {
             Console.WriteLine("New Account Registered!");
-            Console.WriteLine("Please login using registered credentials");
+            Console.WriteLine("Please log in using registered credentials");
 
             LogInMenu();
             return;
@@ -61,11 +61,9 @@ public class AuthenticationMenu
             }
 
             string password = Inputs.RealInput("Password: ");
+            Service = accessability.LogIn(username, password);
 
-            if (accessability.LogIn(username, password)) {
-                LoggedIn = true;
-                return;
-            }
+            if (Service != null)    return;
 
             Console.WriteLine($"Unrecognized Credentials - {3 - a} attempts remain");
         }
@@ -73,14 +71,20 @@ public class AuthenticationMenu
     }
 
     public void End() {
-        if (LoggedIn) accessability.Exiting();
+        if (Service != null) accessability.Exiting();
         return;
     }
 }
 
 public class UserMenu
 {
-    public static void Menu() {
+    protected ERSService _service;
+
+    public UserMenu(ERSService service) {
+        _service = service;
+    }
+
+    protected void Menu() {
         Console.WriteLine("What would you like to do today?");
         Console.WriteLine("[0] Log Out");
         Console.WriteLine("[1] Create Ticket");             //MVP!!!
@@ -89,7 +93,7 @@ public class UserMenu
         return;
     }
 
-    protected static int Selection() {
+    protected int Selection() {
         do {
             string input = Inputs.RealInput("");
             bool number = int.TryParse(input, out int choice);
@@ -121,19 +125,19 @@ public class UserMenu
         } while (true);
     }
 
-    public static void Repeat() {
+    public void Repeat() {
         do {
             Menu();
-            int useless = Selection();
+            int e = Selection();
 
-            if (useless == 0)   break;
+            if (e == 0)   break;
         } while (true);
 
         return;
     }
 
-    protected static void ViewTickets() {
-        List<Ticket>? tickets = ERSService.GetTickets();
+    protected void ViewTickets() {
+        List<Ticket>? tickets = _service.GetTickets();
 
         if (tickets == null) {
             Console.WriteLine("You have not submitted any tickets");
@@ -141,13 +145,13 @@ public class UserMenu
         }
 
         foreach (Ticket t in tickets) {
-            Console.WriteLine("\nTicket Number: " + (tickets.IndexOf(t) + 1));
+            //Console.WriteLine("\nTicket Number: " + (tickets.IndexOf(t) + 1));
             Console.Write(t.Info());
         }
         return;
     }
 
-    protected static void CreateTicket() {
+    protected void CreateTicket() {
         string input = Inputs.RealInput("How much was the expense? (Numbers Only))");
         bool isNumber = decimal.TryParse(input, out decimal amount);
 
@@ -160,17 +164,17 @@ public class UserMenu
 
         string description = Inputs.RealInput("Description: ");
 
-        ERSService.AddTicket(new Ticket(amount, description));
+        _service.AddTicket(new Ticket(amount, description));
         return;
     }
 
-    protected static void ViewAccount() {
+    protected void ViewAccount() {
         Console.WriteLine(":Account Info:");
-        Console.WriteLine(ERSService.AccountInfo());
+        Console.WriteLine(_service.AccountInfo());
         return;
     }
 
-    protected static void UpdateAccount() {
+    protected void UpdateAccount() {
         if (Inputs.YesNoExit("Whould you like to update your account information?")) {
 
         }
@@ -180,7 +184,8 @@ public class UserMenu
 
 public class ManagerMenu : UserMenu
 {   
-    public ManagerMenu() {
+    public ManagerMenu(ERSService service) : base(service) {
+        //_service = service;
         Repeat();
     }
 
@@ -210,7 +215,7 @@ public class ManagerMenu : UserMenu
 
     private void ProcessTickets() {
         do {
-            Ticket? t = ERSService.TicketFromQueue();
+            Ticket? t = _service.TicketFromQueue();
             if (t == null) {
                 Console.WriteLine("There are no unreviewed tickets");
                 return;
@@ -221,7 +226,7 @@ public class ManagerMenu : UserMenu
 
             Console.Write(t.Info());
 
-            ERSService.ReviewTicket(t, Inputs.YesNoExit("Approve ticket?"));
+            _service.ReviewTicket(t, Inputs.YesNoExit("Approve ticket?"));
 
             if (!Inputs.YesNoExit("Would you like to continue with another ticket?"))   return;
         } while (true);
