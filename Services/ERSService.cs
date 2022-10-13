@@ -10,7 +10,7 @@ public class Authentication
 
     public Authentication() {
         _authenticated = false;
-        _repo = new DBRepo();
+        _repo = new DBRepo();           // FOR dependency injection, COULD switch out with initialized factory??
     }
 
     public bool UsernameExists(string username) {
@@ -41,7 +41,7 @@ public class Authentication
         return null;
     }
 
-    public void Exiting() {
+    public void Exiting() {                 // NECESSARY or not??
         _authenticated = false;
         return;
     }
@@ -49,9 +49,9 @@ public class Authentication
 
 public class ERSService
 {
+    private IERSStorage _repo;
     private Employee? eUser = null;
     private Manager? mUser = null;
-    private IERSStorage _repo;
 
     public ERSService(IERSStorage repo, string username) {
         _repo = repo;

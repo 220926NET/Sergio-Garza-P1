@@ -1,6 +1,8 @@
 using Models;
 using Services;
 
+namespace Menus;
+
 public class AuthenticationMenu
 {
     public ERSService? Service { get; private set; } = null;
@@ -32,8 +34,8 @@ public class AuthenticationMenu
         }
         
         string password = Inputs.RealInput("New Password: (must be at least 6 characters long)");
-        while (password.Length < 6) {
-            Console.WriteLine("Invalid Input - Too Short");
+        while (password.Length < 6) {       // SHOULD password validation be in Services(Authentication)??
+            Console.WriteLine("Invalid Password - Too Short");
 
             password = Inputs.RealInput("New Password: (must be at least 6 characters long)");
         }
@@ -52,7 +54,7 @@ public class AuthenticationMenu
     }
 
     private void LogInMenu() {
-        for (int a = 0; a < 4; a++) {
+        for (int a = 0; a < 4; a++) {       // SHOULD attempt counter be in Services(Authentication)??
             string username = Inputs.RealInput("Username: (\"new\" to register)");
 
             if (username.ToLower() == "new") {
@@ -70,7 +72,7 @@ public class AuthenticationMenu
         return;
     }
 
-    public void End() {
+    public void End() {                 // NECESSARY or not??
         if (Service != null) accessability.Exiting();
         return;
     }
@@ -152,13 +154,13 @@ public class UserMenu
     }
 
     protected void CreateTicket() {
-        string input = Inputs.RealInput("How much was the expense? (Numbers Only))");
+        string input = Inputs.RealInput("How much was the expense? (Numbers Only)");
         bool isNumber = decimal.TryParse(input, out decimal amount);
 
-        while(!isNumber) {
+        while(!isNumber) {                  // COULD put the above two commands into each other, then in place of isNumber as condition??
             Console.WriteLine("Invalid Input");
 
-            input = Inputs.RealInput("How much was the expense? (Numbers Only))");
+            input = Inputs.RealInput("How much was the expense? (Numbers Only)");
             isNumber = decimal.TryParse(input, out amount);
         }
 
@@ -184,7 +186,7 @@ public class UserMenu
 
 public class ManagerMenu : UserMenu
 {   
-    public ManagerMenu(ERSService service) : base(service) {
+    public ManagerMenu(ERSService service) : base(service) {        // COULD make an child class of ERSService specifically for manager functionality??!
         //_service = service;
         Repeat();
     }
