@@ -39,7 +39,7 @@ public class DBRepo : IERSStorage
                         values.Add((string) reader[column]);
                     }
                 }
-
+                connection.Close();
                 return values;
             }
 
@@ -89,20 +89,20 @@ public class DBRepo : IERSStorage
         else    return new Manager(data[0], data[1], data[2], data[3]);
     }
     public List<Ticket>? GetTickets(string username) {
-        List<string>? data = GetData($"SELECT * FROM Tickets WHERE Employee = '{username}';", new List<string> {"Amount", "Description", "Status"});////ERROR CHECK in DATA STUDIO!!!
+        List<string>? data = GetData($"SELECT * FROM Tickets WHERE Employee = '{username}';", new List<string> {"Amount", "Description", "Status"});
         if (data == null)   return null;
         
         List<Ticket> tickets = new List<Ticket>();
         for (int i = 0; i < data.Count; i += 3) {
-            tickets.Add(new Ticket(decimal.Parse(data[i]), data[i+1], data[i+2]));
+            tickets.Add(new Ticket((string) username, decimal.Parse(data[i]), data[i+1], data[i+2]));
         }
 
         return tickets;
     }
-    public Ticket GetFromQueue() {
-        List<string>? data = GetData("SELECT ", new List<string> {"Amount", "Description", "Status"});////// FINISH Implementation!! Must get from Tickets table what is the top 1 of TicketQueue when sorted descendingly by WaitNum
-
-        return new Ticket(decimal.Parse(data[0]), data[1], data[2]);
+    public Ticket? GetFromQueue() {          /// SHOULD it also get the employee who submitted it?
+        List<string>? data = GetData("SELECT TOP 1 * FROM Tickets WHERE Reviewer is null ORDER BY Number DESC", new List<string> {"Employee", "Amount", "Description", "Status"});////// FINISH Implementation!! Must get from Tickets table what is the top 1 of TicketQueue when sorted descendingly by WaitNum
+        if (data == null)   return null;
+        else    return new Ticket(data[0], decimal.Parse(data[1]), data[2], data[3]);
     }
 
     public void AddLogIn(string username, string password) {
@@ -113,8 +113,13 @@ public class DBRepo : IERSStorage
         SetData($"INSERT INTO Employees (Username) VALUES (@UName)", new List<string> {"@UName"}, new List<string> {username});
         return;
     }
-    public void NewTicket(Ticket t, string username) {
-        SetData("INSERT INTO Tickets (Employee, Amount, Description) VALUES (@UName, @Amount, @Desc)", new List<string> {"@UName", "@Amount", "@Desc"}, new List<string> {username, t.Amount.ToString(), t.Description});
+    public void NewTicket(Ticket t) {
+        SetData("INSERT INTO Tickets (Employee, Amount, Description) VALUES (@UName, @Amount, @Desc)", new List<string> {"@UName", "@Amount", "@Desc"}, new List<string> {t.User, t.Amount.ToString(), t.Description});
+        return;
+    }
+
+    public void UpdateStatus(Ticket t) {
+        SetData("UPDATE Tickets SET Status = @Decision, Reviewer = @Manager WHERE Employee = @User", new List<string> {"@Decision", "@Manager", "@User"}, new List<string> {t.Status, t.Reviewer, t.User});
         return;
     }
 
@@ -138,10 +143,10 @@ public class DBRepo : IERSStorage
         List<string>? data = GetData($"SELECT COUNT(Number) AS NumTickets FROM Tickets WHERE Employee = '{username}'", new List<string> {"NumTickets"});////ERROR CHECK in DATA STUDIO!!!
         return int.Parse(data[0]);
     }
-    public int QueueLength() {
-        List<string>? data = GetData("SELECT COUNT(Number) AS NumTickets FROM TicketQueue", new List<string> {"NumTickets"});///ERROR CHECK in DATA STUDIO!!!
-        return int.Parse(data[0]);
-    }
+    // public int QueueLength() {
+    //     List<string>? data = GetData("SELECT COUNT(Number) AS NumTickets FROM TicketQueue", new List<string> {"NumTickets"});///ERROR CHECK in DATA STUDIO!!!
+    //     return int.Parse(data[0]);
+    // }
 }
 
 

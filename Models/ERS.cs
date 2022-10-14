@@ -9,18 +9,21 @@ public class Ticket
     //         else    Amount = value;
     //     }
     // }
+    public string User { get; private set; }
     public decimal Amount { get; private set; }
     public string Description { get; private set; }
 
-    public string Status { get; private set; } = "Pending";     // SHOULD these be fully private?? do outside sources need to access them directly?
+    public string Status { get; private set; } = "pending";     // SHOULD these be fully private?? do outside sources need to access them directly?
     public string? Reviewer { get; private set; } = null;
 
-    public Ticket(decimal amount, string description)
+    public Ticket(string user, decimal amount, string description)
     {
+        User = user;
         Amount = amount;
         Description = description;
     }
-    public Ticket(decimal amount, string description, string status) {
+    public Ticket(string user, decimal amount, string description, string status) {
+        User = user;
         Amount = amount;
         Description = description;
         Status = status;
@@ -30,7 +33,8 @@ public class Ticket
         if (m == null)  return;
 
         Reviewer = m.username;
-        if (approval)  Status = "Approved";
+        if (approval)  Status = "approved";
+        else    Status = "denied";
 
         return;
     }

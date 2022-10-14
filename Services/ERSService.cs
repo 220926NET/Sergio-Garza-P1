@@ -28,10 +28,10 @@ public class Authentication
         return false;
     }
 
-    public ERSService? LogIn(string username, string password) {
+    public EmployeeService? LogIn(string username, string password) {
         if (UsernameExists(username)) {
             if (_repo.VerifyCredentials(username, password)) {
-                ERSService service = new ERSService(_repo, username);
+                EmployeeService service = new EmployeeService(_repo, username);
 
                 _authenticated = true;
                 return service;
@@ -41,19 +41,19 @@ public class Authentication
         return null;
     }
 
-    public void Exiting() {                 // NECESSARY or not??
+    public void Exiting() {                 // NECESSARY or not?? Maybe if implementing Unit of Work Pattern?
         _authenticated = false;
         return;
     }
 }
 
-public class ERSService
+public class EmployeeService
 {
     private IERSStorage _repo;
     private Employee? eUser = null;
     private Manager? mUser = null;
 
-    public ERSService(IERSStorage repo, string username) {
+    public EmployeeService(IERSStorage repo, string username) {
         _repo = repo;
 
         if (_repo.IsManager(username))  ManagerLogIn(username);
@@ -81,17 +81,18 @@ public class ERSService
         if (_repo.TicketsCount((eUser ?? mUser).username) > 0)  return _repo.GetTickets((eUser ?? mUser).username);
         else    return null;
     }
-    public void AddTicket(Ticket t) {
-        _repo.NewTicket(t, (eUser ?? mUser).username);
+    public void AddTicket(decimal amount, string description) {
+        _repo.NewTicket(new Ticket((eUser ?? mUser).username, amount, description));
         return;
     }
 
+
     public Ticket? TicketFromQueue() {
-        if (_repo.QueueLength() > 0)    return _repo.GetFromQueue();
-        else    return null;
+        return _repo.GetFromQueue();
     }
     public void ReviewTicket(Ticket t, bool choice) {
         t.Review(mUser, choice);
+        _repo.UpdateStatus(t);
         return;
     }
 }
