@@ -5,7 +5,7 @@ namespace Menus;
 
 public class AuthenticationMenu
 {
-    public ERSService? Service { get; private set; } = null;
+    public EmployeeService? Service { get; private set; } = null;
 
     private Authentication accessability; 
     public AuthenticationMenu() {
@@ -13,7 +13,7 @@ public class AuthenticationMenu
     }
 
     public void AccessMenu() {
-        Console.WriteLine("Welcome to the company's expense reimbursement system!");
+        Console.WriteLine("------------------------------------------------------\nWelcome to the company's expense reimbursement system!\n------------------------------------------------------\n");
 
         if (Inputs.YesNoExit("Do you have a login?")) LogInMenu();
         else {
@@ -24,24 +24,24 @@ public class AuthenticationMenu
     }
 
     private void RegistrationMenu() {
-        Console.WriteLine("New User Registration");
+        Console.WriteLine("\n----------------------\nNew User Registration\n----------------------\n");
 
         string username = Inputs.RealInput("New Username: ");
         while (accessability.UsernameExists(username)) {
-            Console.WriteLine("Username already exists!");
+            Console.WriteLine("\n***Username already exists!***\n");
 
             username = Inputs.RealInput("New Username: ");
         }
         
         string password = Inputs.RealInput("New Password: (must be at least 6 characters long)");
         while (password.Length < 6) {       // SHOULD password validation be in Services(Authentication)??
-            Console.WriteLine("Invalid Password - Too Short");
+            Console.WriteLine("\n***Invalid Password - Too Short***\n");
 
             password = Inputs.RealInput("New Password: (must be at least 6 characters long)");
         }
 
         if (accessability.Register(username, password)) {
-            Console.WriteLine("New Account Registered!");
+            Console.WriteLine("\n-----------New Account Registered!");
             Console.WriteLine("Please log in using registered credentials");
 
             LogInMenu();
@@ -55,7 +55,7 @@ public class AuthenticationMenu
 
     private void LogInMenu() {
         for (int a = 0; a < 4; a++) {       // SHOULD attempt counter be in Services(Authentication)??
-            string username = Inputs.RealInput("Username: (\"new\" to register)");
+            string username = Inputs.RealInput("\nUsername: (\"new\" to register)");
 
             if (username.ToLower() == "new") {
                 RegistrationMenu();
@@ -65,6 +65,7 @@ public class AuthenticationMenu
             string password = Inputs.RealInput("Password: ");
             Service = accessability.LogIn(username, password);
 
+            Console.Clear();
             if (Service != null)    return;
 
             Console.WriteLine($"Unrecognized Credentials - {3 - a} attempts remain");
@@ -80,9 +81,9 @@ public class AuthenticationMenu
 
 public class UserMenu
 {
-    protected ERSService _service;
+    protected EmployeeService _service;
 
-    public UserMenu(ERSService service) {
+    public UserMenu(EmployeeService service) {
         _service = service;
     }
 
@@ -99,6 +100,8 @@ public class UserMenu
         do {
             string input = Inputs.RealInput("");
             bool number = int.TryParse(input, out int choice);
+
+            Console.Clear();
 
             if (number) {
                 switch(choice) {
@@ -166,7 +169,7 @@ public class UserMenu
 
         string description = Inputs.RealInput("Description: ");
 
-        _service.AddTicket(new Ticket(amount, description));
+        _service.AddTicket(amount, description);
         return;
     }
 
@@ -186,7 +189,7 @@ public class UserMenu
 
 public class ManagerMenu : UserMenu
 {   
-    public ManagerMenu(ERSService service) : base(service) {        // COULD make an child class of ERSService specifically for manager functionality??!
+    public ManagerMenu(EmployeeService service) : base(service) {        // COULD make an child class of EmployeeService specifically for manager functionality??!
         //_service = service;
         Repeat();
     }
@@ -267,7 +270,7 @@ public static class Inputs
                 }
             }
                 
-            Console.WriteLine("Unrecognized Input (\"E\" to exit)");
+            Console.WriteLine("\n***Unrecognized Input (\"E\" to exit)***\n");
         } while (true);
     }
 

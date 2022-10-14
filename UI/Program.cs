@@ -4,11 +4,11 @@ AuthenticationMenu access = new AuthenticationMenu();
 access.AccessMenu();
 
 if (access.Service == null) {
-    Console.WriteLine("Access Rejected");
+    Console.WriteLine("\n****************\nAccess Rejected\n****************\n");
     Environment.Exit(0);
 }
 
-Console.WriteLine("Login Successful!");
+Console.WriteLine("-----------------\nLogin Successful!");
 
 if (access.Service.ManagerCheck()) {
     ManagerMenu mMenu = new ManagerMenu(access.Service);
