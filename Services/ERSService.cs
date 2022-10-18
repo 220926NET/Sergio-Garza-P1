@@ -24,14 +24,18 @@ public class Authentication
             _repo.AddEmployee(username);
             return true;
         }
-        _authenticated = false;
-        return false;
+        else    return false;
     }
 
     public EmployeeService? LogIn(string username, string password) {
         if (UsernameExists(username)) {
             if (_repo.VerifyCredentials(username, password)) {
-                EmployeeService service = new EmployeeService(_repo, username);
+                EmployeeService service;
+
+                if (_repo.IsManager(username))  
+                    service = new ManagerService(_repo, username);
+                else    
+                    service = new EmployeeService(_repo, username);
 
                 _authenticated = true;
                 return service;
@@ -49,50 +53,72 @@ public class Authentication
 
 public class EmployeeService
 {
-    private IERSStorage _repo;
-    private Employee? eUser = null;
-    private Manager? mUser = null;
+    protected IERSStorage _repo;
+    protected string _username;
 
     public EmployeeService(IERSStorage repo, string username) {
         _repo = repo;
-
-        if (_repo.IsManager(username))  ManagerLogIn(username);
-        else    EmployeeLogIn(username);
-    }
-
-    private void EmployeeLogIn(string username) {
-        eUser = _repo.GetEmployee(username);
-        return;
-    }
-    private void ManagerLogIn(string username) {
-        mUser = _repo.GetManager(username);
-        return;
-    }
-
-    public bool ManagerCheck() {
-        if (mUser != null)  return true;
-        else    return false;
-    }
-    public string AccountInfo() {
-        return (eUser ?? mUser).Info();
+        _username = username; 
     }
 
     public List<Ticket>? GetTickets() {
-        if (_repo.TicketsCount((eUser ?? mUser).username) > 0)  return _repo.GetTickets((eUser ?? mUser).username);
+        if (_repo.TicketsCount(_username) > 0)  
+            return _repo.GetTickets(_username);
         else    return null;
     }
     public void AddTicket(decimal amount, string description) {
-        _repo.NewTicket(new Ticket((eUser ?? mUser).username, amount, description));
+        _repo.NewTicket(new Ticket(_username, amount, description));
         return;
     }
 
+    public virtual string? AccountInfo() {
+        Employee? user = _repo.GetEmployee(_username);
+        if (user == null)   return null;
+        else    return user.Info();
+    }
 
-    public Ticket? TicketFromQueue() {
+    public virtual bool ManagerCheck() {    return false;   }
+    public virtual Ticket? TicketFromQueue() {  return null;    }
+    public virtual void ReviewTicket(Ticket t, bool choice) {   return; }
+    public virtual bool? RoleCheck(string username) {    return null; }
+    public virtual void ChangeRole(string username) {   return; }
+}
+
+public class ManagerService : EmployeeService
+{
+    public ManagerService(IERSStorage repo, string username) : base(repo, username) {}
+
+    public override bool ManagerCheck() {    return true;    }
+
+    public override string? AccountInfo() {
+        Manager? user = _repo.GetManager(_username);
+        if (user == null)   return null;
+        else    return user.Info();
+    }
+
+    public override Ticket? TicketFromQueue() {
         return _repo.GetFromQueue();
     }
-    public void ReviewTicket(Ticket t, bool choice) {
-        t.Review(mUser, choice);
+    public override void ReviewTicket(Ticket t, bool choice) {
+        t.Review(_repo.GetManager(_username), choice);
         _repo.UpdateStatus(t);
+        return;
+    }
+
+    public override bool? RoleCheck(string username) {
+        if (_repo.CheckUsername(username)) {
+            if (_repo.IsManager(username))  return true;
+            else    return false;
+        }
+        else    return null;
+    }
+    public override void ChangeRole(string username) {
+        if (_repo.IsManager(username)) {
+            // delete from manager talbe
+        }
+        else {
+            // add to manager table
+        }
         return;
     }
 }

@@ -40,14 +40,14 @@ public class Ticket
     }
 
     public string Info() {
-        return ($"Amount: {Amount}\nDescription: {Description}\n");
+        return ($"Amount: ${Amount.ToString("F")}\nDescription: {Description}\nStatus: {Status}\n");
     }
 }
 
 public class Employee
 {
-    public string firstName, lastName, username;
-    public string? middleName = null;
+    public string username;
+    protected string? firstName, lastName, middleName = null;
 
     //public Employee() {}
     public Employee(string first, string last, string user) {
@@ -63,17 +63,12 @@ public class Employee
     }
 
     public string Info() {
-        return ($"First Name: {firstName}, Middle Name: {(middleName != null ? middleName : "N/A")}, Last Name: {lastName}");
+        return ($"First Name: {(firstName != null ? firstName : "N/A")}, Middle Name: {(middleName != null ? middleName : "N/A")}, Last Name: {(lastName != null ? lastName : "N/A")}");
     }
 }
 
 public class Manager : Employee
 {
-    public Manager(string first, string last, string user) : base(first, last, user) {
-        // firstName = first;
-        // lastName = last;
-        // username = user;
-    }
-
+    public Manager(string first, string last, string user) : base(first, last, user) {}
     public Manager(string first, string middle, string last, string user) : base(first, middle, last, user) {}
 }

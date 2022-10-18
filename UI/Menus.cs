@@ -41,14 +41,15 @@ public class AuthenticationMenu
         }
 
         if (accessability.Register(username, password)) {
-            Console.WriteLine("\n-----------New Account Registered!");
+            Console.Clear();
+            Console.WriteLine("------------------------\nNew Account Registered!\n------------------------\n");
             Console.WriteLine("Please log in using registered credentials");
 
             LogInMenu();
             return;
         }
         else {
-            Console.WriteLine("Registration Error");
+            Console.WriteLine("\n******************\nRegistration Error\n******************\n");
             return;
         }
     }
@@ -88,7 +89,7 @@ public class UserMenu
     }
 
     protected void Menu() {
-        Console.WriteLine("What would you like to do today?");
+        Console.WriteLine("\nWhat would you like to do?");
         Console.WriteLine("[0] Log Out");
         Console.WriteLine("[1] Create Ticket");             //MVP!!!
         Console.WriteLine("[2] View Your Previous Tickets");     //MVP!!!
@@ -126,7 +127,7 @@ public class UserMenu
                 }
             }
                 
-            Console.WriteLine("Unrecognized Input (\"0\" to exit)");
+            Console.WriteLine("\n***Unrecognized Input (\"0\" to exit)***\n");
         } while (true);
     }
 
@@ -145,13 +146,13 @@ public class UserMenu
         List<Ticket>? tickets = _service.GetTickets();
 
         if (tickets == null) {
-            Console.WriteLine("You have not submitted any tickets");
+            Console.WriteLine("You have not submitted any tickets.\n");
             return;
         }
 
         foreach (Ticket t in tickets) {
             //Console.WriteLine("\nTicket Number: " + (tickets.IndexOf(t) + 1));
-            Console.Write(t.Info());
+            Console.WriteLine(t.Info() + "------------------------------------");
         }
         return;
     }
@@ -161,7 +162,7 @@ public class UserMenu
         bool isNumber = decimal.TryParse(input, out decimal amount);
 
         while(!isNumber) {                  // COULD put the above two commands into each other, then in place of isNumber as condition??
-            Console.WriteLine("Invalid Input");
+            Console.WriteLine("\n***Invalid Input***\n");
 
             input = Inputs.RealInput("How much was the expense? (Numbers Only)");
             isNumber = decimal.TryParse(input, out amount);
@@ -174,14 +175,46 @@ public class UserMenu
     }
 
     protected void ViewAccount() {
-        Console.WriteLine(":Account Info:");
-        Console.WriteLine(_service.AccountInfo());
+        Console.WriteLine("------------\nAccount Info\n------------\n");
+        string? info = _service.AccountInfo();
+        if (info == null)  Console.WriteLine("No User Info Found");
+        else    Console.WriteLine(info);
         return;
     }
 
     protected void UpdateAccount() {
-        if (Inputs.YesNoExit("Whould you like to update your account information?")) {
+        if (Inputs.YesNoExit("\nWhould you like to update your account information?")) {
+            // do {
+            //     string input = Inputs.RealInput("What would you like to change?");
+            //     bool number = int.TryParse(input, out int choice);
 
+            //     Console.Clear();
+
+            //     if (number) {
+            //         switch(choice) {
+            //             case 0:
+            //                 return 0;
+            //             case 1:
+            //                 CreateTicket();
+            //                 return 1;
+            //             case 2:
+            //                 ViewTickets();
+            //                 return 2;
+            //             case 3:
+            //                 ViewAccount();
+            //                 UpdateAccount();
+            //                 return 3;
+            //             case 4:
+            //                 return 4;
+            //             case 5:
+            //                 return 5;
+            //             default:
+            //                 break;
+            //         }
+            //     }
+                    
+            //     Console.WriteLine("\n***Unrecognized Input (\"0\" to exit)***\n");
+            // } while (true);
         }
         return;
     }
@@ -190,7 +223,6 @@ public class UserMenu
 public class ManagerMenu : UserMenu
 {   
     public ManagerMenu(EmployeeService service) : base(service) {        // COULD make an child class of EmployeeService specifically for manager functionality??!
-        //_service = service;
         Repeat();
     }
 
@@ -211,7 +243,7 @@ public class ManagerMenu : UserMenu
             else if (choice == 4) 
                 ProcessTickets();
             else if (choice == 5) {
-
+                ChangeRole();
             }
         } while (true);
 
@@ -220,21 +252,43 @@ public class ManagerMenu : UserMenu
 
     private void ProcessTickets() {
         do {
+            Console.Clear();
             Ticket? t = _service.TicketFromQueue();
             if (t == null) {
-                Console.WriteLine("There are no unreviewed tickets");
+                Console.Clear();
+                Console.WriteLine("There are no unreviewed tickets!\n");
                 return;
             }
 
-            Console.WriteLine("Reviewing oldest ticket submission");
+            Console.WriteLine("Reviewing oldest ticket submission.");
             Console.WriteLine("\nTicket Info: ");
 
             Console.Write(t.Info());
 
-            _service.ReviewTicket(t, Inputs.YesNoExit("Approve ticket?"));
+            _service.ReviewTicket(t, Inputs.YesNoExit("\nApprove ticket?"));
 
             if (!Inputs.YesNoExit("Would you like to continue with another ticket?"))   return;
         } while (true);
+    }
+
+    private void ChangeRole() {
+        string user = Inputs.RealInput("Username to change role of: ");
+        bool? manager = _service.RoleCheck(user);
+
+        if (manager == null) {
+            Console.WriteLine("Username does not exist!");
+            return;
+        }
+
+        Console.WriteLine($"User Role: {(manager == true ? "Manager" : "Employee")}");
+
+        if (Inputs.YesNoExit("Would you like to change user's role?")) {
+            _service.ChangeRole(user);
+
+            Console.WriteLine($"Role of {user} changed!");
+        }
+
+        return;
     }
 }
 

@@ -8,7 +8,8 @@ if (access.Service == null) {
     Environment.Exit(0);
 }
 
-Console.WriteLine("-----------------\nLogin Successful!");
+Console.Clear();
+Console.WriteLine("-----------------\nLogin Successful!\n-----------------\n");
 
 if (access.Service.ManagerCheck()) {
     ManagerMenu mMenu = new ManagerMenu(access.Service);
@@ -20,7 +21,7 @@ else {
 
 
 access.End();
-Console.WriteLine("Exiting System");
+Console.WriteLine("*************\nSystem Exited\n*************\n");
 
 
 
