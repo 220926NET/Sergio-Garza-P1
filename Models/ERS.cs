@@ -9,30 +9,46 @@ public class Ticket
     //         else    Amount = value;
     //     }
     // }
-    public string User { get; private set; }
+    public int? Id { get; private set; } = null;
+    public int User { get; private set; }
     public decimal Amount { get; private set; }
     public string Description { get; private set; }
 
     public string Status { get; private set; } = "pending";     // SHOULD these be fully private?? do outside sources need to access them directly?
-    public string? Reviewer { get; private set; } = null;
+    public int? Reviewer { get; private set; } = null;
 
-    public Ticket(string user, decimal amount, string description)
+    public Ticket(int user, decimal amount, string description)
     {
         User = user;
         Amount = amount;
         Description = description;
     }
-    public Ticket(string user, decimal amount, string description, string status) {
+    public Ticket(int user, decimal amount, string description, string status) {
         User = user;
         Amount = amount;
         Description = description;
         Status = status;
     }
+    public Ticket(int num, int user, decimal amount, string description, string status) {
+        Id = num;
+        User = user;
+        Amount = amount;
+        Description = description;
+        Status = status;
+    }
+    public Ticket(int num, int user, decimal amount, string description, string status, int reviewer) {
+        Id = num;
+        User = user;
+        Amount = amount;
+        Description = description;
+        Status = status;
+        Reviewer = reviewer;
+    }
 
     public void Review(Manager? m, bool approval) {
         if (m == null)  return;
 
-        Reviewer = m.username;
+        Reviewer = m.userId;
         if (approval)  Status = "approved";
         else    Status = "denied";
 
@@ -46,20 +62,20 @@ public class Ticket
 
 public class Employee
 {
-    public string username;
+    public int userId;
     protected string? firstName, lastName, middleName = null;
 
     //public Employee() {}
-    public Employee(string first, string last, string user) {
+    public Employee(string first, string last, int user) {
         firstName = first;
         lastName = last;
-        username = user;
+        userId = user;
     }
-    public Employee(string first, string middle, string last, string user) {
+    public Employee(string first, string middle, string last, int user) {
         firstName = first;
         middleName = middle;
         lastName = last;
-        username = user;
+        userId = user;
     }
 
     public string Info() {
@@ -69,6 +85,6 @@ public class Employee
 
 public class Manager : Employee
 {
-    public Manager(string first, string last, string user) : base(first, last, user) {}
-    public Manager(string first, string middle, string last, string user) : base(first, middle, last, user) {}
+    public Manager(string first, string last, int user) : base(first, last, user) {}
+    public Manager(string first, string middle, string last, int user) : base(first, middle, last, user) {}
 }

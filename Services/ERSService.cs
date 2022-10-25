@@ -1,4 +1,4 @@
-﻿using Models;
+using Models;
 using DataAccess;
 
 namespace Services;
@@ -6,20 +6,13 @@ namespace Services;
 public class Authentication
 {
     private IERSStorage _repo;
-    private bool _authenticated;
 
     public Authentication() {
-        _authenticated = false;
         _repo = new DBRepo();           // FOR dependency injection, COULD switch out with initialized factory??
     }
 
-    public bool UsernameExists(string username) {
-        if (_repo.CheckUsername(username)) return true;
-        else    return false;
-    }
-
     public bool Register(string username, string password) {
-        if (!UsernameExists(username)) {
+        if (!_repo.UsernameExists(username)) {
             _repo.AddLogIn(username, password);
             _repo.AddEmployee(username);
             return true;
@@ -27,98 +20,77 @@ public class Authentication
         else    return false;
     }
 
-    public EmployeeService? LogIn(string username, string password) {
-        if (UsernameExists(username)) {
+    public int LogIn(string username, string password) {
+        if (_repo.UsernameExists(username)) {
             if (_repo.VerifyCredentials(username, password)) {
-                EmployeeService service;
-
-                if (_repo.IsManager(username))  
-                    service = new ManagerService(_repo, username);
-                else    
-                    service = new EmployeeService(_repo, username);
-
-                _authenticated = true;
-                return service;
+                return _repo.UserId(username);
             }
         }
-        _authenticated = false;
-        return null;
+        return 0;
     }
 
     public void Exiting() {                 // NECESSARY or not?? Maybe if implementing Unit of Work Pattern?
-        _authenticated = false;
+        // LoggedIn bit to false in DB!!
         return;
     }
 }
 
-public class EmployeeService
+public class ERSService
 {
-    protected IERSStorage _repo;
-    protected string _username;
+    private IERSStorage _repo;
 
-    public EmployeeService(IERSStorage repo, string username) {
-        _repo = repo;
-        _username = username; 
+    public ERSService() {
+        _repo = new DBRepo();           // FOR dependency injection, COULD switch out with initialized factory??
     }
 
-    public List<Ticket>? GetTickets() {
-        if (_repo.TicketsCount(_username) > 0)  
-            return _repo.GetTickets(_username);
-        else    return null;
+    public int AddTicket(int id, decimal amount, string description) {
+        return _repo.NewTicket(new Ticket(id, amount, description));
     }
-    public void AddTicket(decimal amount, string description) {
-        _repo.NewTicket(new Ticket(_username, amount, description));
+
+    public List<Ticket>? Tickets(int? userId) { 
+        return _repo.GetTickets(userId);
+    }
+
+    public bool ManagerCheck(int empId) {
+        return _repo.IsManager(empId);
+    }
+
+    public void ReviewTicket(int tNum, int reviewer, string choice) {
+        //_repo.UpdateStatus(tNum, reviewer, (choice ? "Approved" : "Denied"));
+        _repo.UpdateStatus(tNum, reviewer, choice);
         return;
     }
 
-    public virtual string? AccountInfo() {
-        Employee? user = _repo.GetEmployee(_username);
-        if (user == null)   return null;
-        else    return user.Info();
-    }
+    // public string? AccountInfo() {
+    //     Employee? user = _repo.GetEmployee(_username);
+    //     if (user == null)   return null;
+    //     else    return user.Info();
+    // }
 
-    public virtual bool ManagerCheck() {    return false;   }
-    public virtual Ticket? TicketFromQueue() {  return null;    }
-    public virtual void ReviewTicket(Ticket t, bool choice) {   return; }
-    public virtual bool? RoleCheck(string username) {    return null; }
-    public virtual void ChangeRole(string username) {   return; }
-}
+    // public string? AccountInfo() {
+    //     Manager? user = _repo.GetManager(_username);
+    //     if (user == null)   return null;
+    //     else    return user.Info();
+    // }
 
-public class ManagerService : EmployeeService
-{
-    public ManagerService(IERSStorage repo, string username) : base(repo, username) {}
+    // public Ticket? TicketFromQueue() {
+    //     return _repo.GetFromQueue();
+    // }
 
-    public override bool ManagerCheck() {    return true;    }
-
-    public override string? AccountInfo() {
-        Manager? user = _repo.GetManager(_username);
-        if (user == null)   return null;
-        else    return user.Info();
-    }
-
-    public override Ticket? TicketFromQueue() {
-        return _repo.GetFromQueue();
-    }
-    public override void ReviewTicket(Ticket t, bool choice) {
-        t.Review(_repo.GetManager(_username), choice);
-        _repo.UpdateStatus(t);
-        return;
-    }
-
-    public override bool? RoleCheck(string username) {
-        if (_repo.CheckUsername(username)) {
-            if (_repo.IsManager(username))  return true;
-            else    return false;
-        }
-        else    return null;
-    }
-    public override void ChangeRole(string username) {
-        if (_repo.IsManager(username)) {
-            // delete from manager talbe
-        }
-        else {
-            // add to manager table
-        }
-        return;
-    }
+    // public bool? RoleCheck(string username) {
+    //     if (_repo.UsernameExists(username)) {
+    //         if (_repo.IsManager(username))  return true;
+    //         else    return false;
+    //     }
+    //     else    return null;
+    // }
+    // public void ChangeRole(string username) {
+    //     if (_repo.IsManager(username)) {
+    //         // delete from manager talbe
+    //     }
+    //     else {
+    //         // add to manager table
+    //     }
+    //     return;
+    // }
 }

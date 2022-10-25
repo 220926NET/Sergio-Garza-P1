@@ -264,6 +264,7 @@ public class ManagerMenu : UserMenu
             Console.WriteLine("\nTicket Info: ");
 
             Console.Write(t.Info());
+            Console.WriteLine("Submitted by: " + t.User);
 
             _service.ReviewTicket(t, Inputs.YesNoExit("\nApprove ticket?"));
 
