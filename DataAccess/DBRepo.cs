@@ -231,7 +231,7 @@ public class DBRepo : IERSStorage
 
 public class ConnectionFactory
 {
-    private const string _connectionString = $"Server=tcp:220926net-sg-ers.database.windows.net,1433;Initial Catalog=ERSDB;Persist Security Info=False;User ID=ers-admin;Password={Secret.password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
+    private const string _connectionString = "";//$"Server=tcp:220926net-sg-ers.database.windows.net,1433;Initial Catalog=ERSDB;Persist Security Info=False;User ID=ers-admin;Password={Secret.password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
 
     public SqlConnection GetConnection() {
         return new SqlConnection(_connectionString);
